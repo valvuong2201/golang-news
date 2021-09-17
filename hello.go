@@ -1,16 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"github.com/joho/godotenv"
 	"html/template"
+	"log"
 	"math"
 	"net/http"
 	"net/url"
 	"os"
-	"log"
-	"github.com/joho/godotenv"
-	"time"
 	"strconv"
-	"bytes"
+	"time"
 	"vuong/hello/news"
 )
 
@@ -18,13 +18,13 @@ var tpl = template.Must(template.ParseFiles("index.html"))
 var newsapi *news.Client
 
 type Search struct {
-	Query string
-	NextPage int
+	Query      string
+	NextPage   int
 	TotalPages int
-	Results *news.Results
+	Results    *news.Results
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request)  {
+func indexHandler(w http.ResponseWriter, r *http.Request) {
 	buf := bytes.Buffer{}
 	err := tpl.Execute(w, nil)
 	if err != nil {
@@ -36,7 +36,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request)  {
 }
 
 func searchHandler(newsapi *news.Client) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request)  {
+	return func(w http.ResponseWriter, r *http.Request) {
 		u, err := url.Parse(r.URL.String())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,10 +63,10 @@ func searchHandler(newsapi *news.Client) http.HandlerFunc {
 		}
 
 		search := &Search{
-			Query: searchQuery,
-			NextPage: nextPage,
+			Query:      searchQuery,
+			NextPage:   nextPage,
 			TotalPages: int(math.Ceil(float64(result.TotalResults) / float64(newsapi.PageSize))),
-			Results: result,
+			Results:    result,
 		}
 
 		if ok := !search.IsLastPage(); ok {
@@ -84,7 +84,7 @@ func searchHandler(newsapi *news.Client) http.HandlerFunc {
 	}
 }
 
-func (s *Search) IsLastPage() bool  {
+func (s *Search) IsLastPage() bool {
 	return s.NextPage >= s.TotalPages
 }
 
@@ -95,7 +95,7 @@ func (s *Search) CurrentPage() int {
 	return s.NextPage - 1
 }
 
-func (s *Search) PreviousPage() int  {
+func (s *Search) PreviousPage() int {
 	return s.CurrentPage() - 1
 }
 
@@ -124,5 +124,5 @@ func main() {
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 	mux.HandleFunc("/", indexHandler)
 	mux.HandleFunc("/search", searchHandler(newsapi))
-	http.ListenAndServe(":" + port, mux)
+	http.ListenAndServe(":"+port, mux)
 }
